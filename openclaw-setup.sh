@@ -22,16 +22,21 @@ doctl auth init --access-token "$DO_TOKEN"
 KEY_COUNT=$(doctl compute ssh-key list --format ID --no-header | wc -l)
 [ "$KEY_COUNT" -eq 0 ] && doctl compute ssh-key import openclaw-key --public-key-file ~/.ssh/id_ed25519.pub
 
-doctl compute droplet create openclaw1 \
-  --region nyc1 \
-  --size s-1vcpu-2gb \
-  --image ubuntu-24-04-x64 \
-  --ssh-keys "$(doctl compute ssh-key list --format ID --no-header | head -1)" \
-  --wait \
-  --format ID,Name,PublicIPv4 \
-  --no-header
+EXISTING=$(doctl compute droplet list --format ID,Name --no-header | awk '$2=="openclaw1"{print $1}')
+if [ -z "$EXISTING" ]; then
+  doctl compute droplet create openclaw1 \
+    --region nyc1 \
+    --size s-1vcpu-2gb \
+    --image ubuntu-24-04-x64 \
+    --ssh-keys "$(doctl compute ssh-key list --format ID --no-header | head -1)" \
+    --wait \
+    --format ID,Name,PublicIPv4 \
+    --no-header
+else
+  echo "Droplet openclaw1 already exists (ID: $EXISTING), skipping creation."
+fi
 
-DROPLET_IP=$(doctl compute droplet get openclaw1 --format PublicIPv4 --no-header)
+DROPLET_IP=$(doctl compute droplet list --format Name,PublicIPv4 --no-header | awk '$1=="openclaw1"{print $2}' | head -1)
 echo "Droplet IP: $DROPLET_IP"
 
 until ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=accept-new root@"$DROPLET_IP" 'echo ready' 2>/dev/null; do
