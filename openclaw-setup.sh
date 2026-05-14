@@ -48,14 +48,16 @@ SWAP
 # ── 3. Node.js ────────────────────────────────────────────────────────────────
 ssh root@"$DROPLET_IP" 'bash -s' <<'NODE'
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
-source ~/.bashrc
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 nvm install --lts
 node --version && npm --version
 NODE
 
 # ── 4. OpenClaw install ───────────────────────────────────────────────────────
 ssh root@"$DROPLET_IP" 'bash -s' <<'INSTALL'
-source ~/.bashrc
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 curl -fsSL https://openclaw.ai/install.sh | OPENCLAW_SKIP_SETUP=1 bash || true
 openclaw --version
 INSTALL
